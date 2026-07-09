@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=350" />
+  <title>ReviseLeet</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #242424;
+      --bg-card: #2a2a2a;
+      --bg-card-hover: #333333;
+      --accent: #ffa116;
+      --accent-dim: rgba(255, 161, 22, 0.15);
+      --accent-glow: rgba(255, 161, 22, 0.08);
+      --text-primary: #efefef;
+      --text-secondary: #a0a0a0;
+      --text-muted: #ffffff;
+      --border: #383838;
+      --border-hover: #4a4a4a;
+      --success: #2cbb5d;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      width: 350px;
+      min-height: 200px;
+      max-height: 600px;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::-webkit-scrollbar {
+      width: 4px;
+    }
+    body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    body::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(180deg, var(--bg-primary) 80%, transparent);
+      padding: 16px 18px 12px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .header-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-left: 30px;
+    }
+
+    .header-divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+      margin-top: 10px;
+      opacity: 0.4;
+    }
+
+    .content {
+      padding: 8px 14px 14px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .stat-chip {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-value.accent {
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+
+    .problem-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .problem-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      transition: all var(--transition);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .problem-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .problem-card:active {
+      transform: translateY(0);
+    }
+
+    .problem-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .problem-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color var(--transition);
+    }
+
+    .problem-card:hover .problem-name {
+      color: var(--accent);
+    }
+
+    .problem-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .step-badge {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .step-badge.step-1 {
+      background: rgba(255, 161, 22, 0.12);
+      color: #ffb84d;
+      border: 1px solid rgba(255, 161, 22, 0.2);
+    }
+    .step-badge.step-2 {
+      background: rgba(255, 193, 7, 0.12);
+      color: #ffd54f;
+      border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    .step-badge.step-3 {
+      background: rgba(76, 175, 80, 0.12);
+      color: #81c784;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+    .step-badge.step-4 {
+      background: rgba(33, 150, 243, 0.12);
+      color: #64b5f6;
+      border: 1px solid rgba(33, 150, 243, 0.2);
+    }
+    .step-badge.step-5 {
+      background: rgba(156, 39, 176, 0.12);
+      color: #ce93d8;
+      border: 1px solid rgba(156, 39, 176, 0.2);
+    }
+
+    .step-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 14px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .empty-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 220px;
+    }
+
+    .empty-streak {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success);
+      background: rgba(44, 187, 93, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(44, 187, 93, 0.2);
+    }
+
+    .footer {
+      padding: 10px 18px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-text {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .footer-progress {
+      display: flex;
+      gap: 3px;
+    }
+
+    .progress-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background var(--transition);
+    }
+
+    .progress-dot.filled {
+      background: var(--accent);
+    }
+
+    .progress-dot.completed {
+      background: var(--success);
+    }
+
+    .upcoming-divider {
+      margin: 14px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upcoming-divider::before,
+    .upcoming-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .upcoming-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .upcoming-card {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .upcoming-card .problem-name {
+      color: var(--text-secondary);
+    }
+
+    .upcoming-date {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-top">
+      <div class="header-brand">
+        <img src="icon.png" alt="ReviseLeet Logo" width="28" height="28" />
+        <span class="header-title">ReviseLeet</span>
+      </div>
+    </div>
+    <div class="header-subtitle" id="header-subtitle">Loading…</div>
+    <div class="header-divider"></div>
+  </div>
+
+  <div class="content">
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-chip">
+        <div class="stat-value accent" id="stat-due">–</div>
+        <div class="stat-label">Due Today</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-value" id="stat-tracking">–</div>
+        <div class="stat-label">Tracking</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-value" id="stat-graduated">–</div>
+        <div class="stat-label">Mastered</div>
+      </div>
+    </div>
+
+    <div id="due-section"></div>
+
+    <div id="upcoming-section"></div>
+  </div>
+
+  <div class="footer" id="footer">
+    <span class="footer-text">SPACED REPETITION · 1 · 3 · 7 · 15 · 30</span>
+    <span class="footer-text">© AMAN</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

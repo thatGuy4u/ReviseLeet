@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "ReviseLeet — Spaced Repetition for LeetCode",
+  "version": "1.0.0",
+  "description": "Automatically tracks your LeetCode submissions and schedules spaced repetition reviews at 1, 3, 7, 15, and 30 day intervals.",
+  "permissions": ["storage"],
+  "host_permissions": ["*://leetcode.com/*"],
+  "author": "Aman Kumar",
+  "author_email": "mailtoamandtu@gmail.com",
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://leetcode.com/problems/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "ReviseLeet — Today's Revisions"
+  }
+}
