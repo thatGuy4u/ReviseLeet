@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 🧠 ReviseLeet
 
@@ -462,4 +462,3 @@ This project is open-source and available under the [MIT License](LICENSE).
 <sub>Built with ☕ and 💛 for the LeetCode grind</sub>
 
 </div>
-]]>
