@@ -6,7 +6,6 @@
   "permissions": ["storage"],
   "host_permissions": ["*://leetcode.com/*"],
   "author": "Aman Kumar",
-  "author_email": "mailtoamandtu@gmail.com",
   "icons": {
     "16": "icon.png",
     "32": "icon.png",
