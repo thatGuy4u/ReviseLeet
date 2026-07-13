@@ -1,3 +1,4 @@
+/* global chrome */
 
 (() => {
   "use strict";
@@ -34,72 +35,54 @@
 
     console.log(`[ReviseLeet] ✅ Detected accepted submission: ${slug}`);
 
-    chrome.runtime.sendMessage({
-      action: "trackSubmission",
-      problemSlug: slug,
-      url: `https://leetcode.com/problems/${slug}/`,
-      timestamp: now
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.warn("[ReviseLeet] Could not reach background:", chrome.runtime.lastError.message);
-      } else {
-        console.log("[ReviseLeet] Background response:", response?.status || "OK");
-      }
-    });
+    try {
+      chrome.runtime.sendMessage({
+        action: "trackSubmission",
+        problemSlug: slug,
+        url: `https://leetcode.com/problems/${slug}/`,
+        timestamp: now
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("[ReviseLeet] Could not reach background:", chrome.runtime.lastError.message);
+        } else {
+          console.log("[ReviseLeet] Background response:", response?.status || "OK");
+        }
+      });
+    } catch (err) {
+      console.warn("[ReviseLeet] Extension context error:", err.message);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // LAYER 1: API Interception (Primary — most reliable)
+  // inject.js intercepts fetch in the MAIN world and posts messages
+  // back here when an accepted submission is found.
   // ═══════════════════════════════════════════════════════════════════
 
-  const injectedCode = `
-    (function() {
-      if (window.__reviseLeetHooked) return;
-      window.__reviseLeetHooked = true;
-
-      const originalFetch = window.fetch;
-
-      window.fetch = async function(...args) {
-        const response = await originalFetch.apply(this, args);
-
-        try {
-          const url = (typeof args[0] === 'string') ? args[0] : args[0]?.url || '';
-
-          // LeetCode polls:  /submissions/detail/<id>/check/
-          if (url.includes('/submissions/detail/') && url.includes('/check')) {
-            const clone = response.clone();
-            clone.json().then(data => {
-              // status_msg is "Accepted" for successful submissions
-              // state is "SUCCESS" when the check is complete
-              if (data && data.status_msg === 'Accepted' && data.state === 'SUCCESS') {
-                window.postMessage({
-                  type: '__REVISELEET_ACCEPTED__',
-                  slug: window.location.pathname.match(/\\/problems\\/([^/]+)/)?.[1] || '',
-                  runtime: data.status_runtime || '',
-                  memory: data.status_memory || ''
-                }, '*');
-              }
-            }).catch(() => {});
-          }
-        } catch (e) {
-          // Never break LeetCode's own functionality
-        }
-
-        return response;
+  // Ensure inject.js is loaded in the MAIN world.
+  // The manifest "world":"MAIN" entry handles this, but we also
+  // inject via <script src> as a reliable CSP-safe fallback.
+  function ensureFetchHook() {
+    try {
+      const script = document.createElement("script");
+      script.src = chrome.runtime.getURL("inject.js");
+      script.onload = () => {
+        script.remove();
+        console.log("[ReviseLeet] Fetch hook injected via <script src> fallback");
       };
-    })();
-  `;
-
-  // Inject into the MAIN world via a <script> tag
-  function injectFetchHook() {
-    const script = document.createElement("script");
-    script.textContent = injectedCode;
-    (document.head || document.documentElement).appendChild(script);
-    script.remove(); // Clean up — the code has already executed
-    console.log("[ReviseLeet] Fetch hook injected into MAIN world");
+      script.onerror = () => {
+        script.remove();
+        console.log("[ReviseLeet] Fetch hook <script src> failed (manifest injection should handle it)");
+      };
+      (document.head || document.documentElement).appendChild(script);
+    } catch (err) {
+      console.warn("[ReviseLeet] Could not inject fetch hook:", err.message);
+    }
   }
 
-  // Listen for messages from the injected script
+  ensureFetchHook();
+
+  // Listen for messages from the MAIN-world inject.js
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
     if (event.data?.type !== "__REVISELEET_ACCEPTED__") return;
@@ -111,17 +94,43 @@
     }
   });
 
-  // Inject immediately
-  injectFetchHook();
-
   // ═══════════════════════════════════════════════════════════════════
   // LAYER 2: DOM MutationObserver (Fallback safety net)
+  // Only activates after the user clicks the Submit button.
+  // This prevents false positives from browsing past submissions.
   // ═══════════════════════════════════════════════════════════════════
 
   let fallbackFired = false; // Only fire once per page to avoid noise
+  let userClickedSubmit = false; // Gate: only track after a real submit click
+
+  // Watch for clicks on LeetCode's Submit button
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest(
+      '[data-e2e-locator="console-submit-button"]'
+    );
+
+    if (!target) {
+      // Fallback: look for a button whose text contains "Submit"
+      // (but not "Submissions" to avoid the tab link)
+      const btn = event.target.closest("button");
+      if (btn) {
+        const text = btn.textContent.trim();
+        if (text === "Submit" || text === "Submit Code") {
+          userClickedSubmit = true;
+          console.log("[ReviseLeet] Submit button clicked (text match)");
+          return;
+        }
+      }
+      return;
+    }
+
+    userClickedSubmit = true;
+    console.log("[ReviseLeet] Submit button clicked (data-e2e-locator)");
+  }, true); // Capture phase to catch it early
 
   const observer = new MutationObserver((mutations) => {
     if (fallbackFired) return;
+    if (!userClickedSubmit) return; // ← Only check if user actually submitted
 
     for (const mutation of mutations) {
       if (mutation.addedNodes.length === 0 && mutation.type !== "characterData") continue;
@@ -166,13 +175,14 @@
     document.addEventListener("DOMContentLoaded", startObserving);
   }
 
-  // Reset fallback flag on SPA navigation (URL change)
+  // Reset flags on SPA navigation (URL change)
   let lastUrl = window.location.href;
   const urlObserver = new MutationObserver(() => {
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       fallbackFired = false;
-      console.log("[ReviseLeet] URL changed, fallback reset:", lastUrl);
+      userClickedSubmit = false; // Reset submit gate on navigation
+      console.log("[ReviseLeet] URL changed, flags reset:", lastUrl);
     }
   });
   urlObserver.observe(document.body || document.documentElement, {

@@ -215,6 +215,31 @@
       color: var(--text-muted);
     }
 
+    .remove-btn {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 4px;
+      opacity: 0.4;
+      transition: all var(--transition);
+      line-height: 1;
+    }
+
+    .remove-btn:hover {
+      opacity: 1;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
     .step-badge {
       flex-shrink: 0;
       display: flex;
@@ -329,6 +354,37 @@
       letter-spacing: 0.5px;
     }
 
+    .export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: rgba(255, 161, 22, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.3px;
+    }
+
+    .export-btn:hover {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: rgba(255, 161, 22, 0.1);
+    }
+
+    .export-btn:active {
+      transform: scale(0.96);
+    }
+
+    .export-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
     .footer-progress {
       display: flex;
       gap: 3px;
@@ -376,6 +432,9 @@
 
     .upcoming-card {
       opacity: 0.5;
+    }
+
+    .upcoming-card .problem-link {
       pointer-events: none;
     }
 
@@ -426,7 +485,14 @@
 
   <div class="footer" id="footer">
     <span class="footer-text">SPACED REPETITION · 1 · 3 · 7 · 15 · 30</span>
-    <span class="footer-text">© AMAN</span>
+    <button class="export-btn" id="export-btn" title="Export all data as JSON">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export
+    </button>
   </div>
 
   <script src="popup.js"></script>

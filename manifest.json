@@ -18,6 +18,12 @@
   "content_scripts": [
     {
       "matches": ["*://leetcode.com/problems/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://leetcode.com/problems/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
@@ -31,5 +37,11 @@
       "128": "icon.png"
     },
     "default_title": "ReviseLeet — Today's Revisions"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["*://leetcode.com/*"]
+    }
+  ]
 }
