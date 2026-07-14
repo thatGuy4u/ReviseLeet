@@ -68,10 +68,10 @@ Zero manual effort. ReviseLeet uses a **dual-layer detection system** — interc
 <td width="50%">
 
 ### 📅 Spaced Repetition Schedule
-Each solved problem gets a scientifically-backed revision schedule:
+Each solved problem gets a scientifically-backed revision schedule with **dynamic intervals** — each review date is calculated from when you completed the previous one:
 
 ```
-Day 1 → Day 3 → Day 7 → Day 15 → Day 30
++1 day → +3 days → +7 days → +15 days → +30 days
 ```
 
 Five reviews. That's all it takes to cement a solution in long-term memory.
@@ -123,7 +123,15 @@ Solved the same problem twice by accident? Re-submitted during practice? ReviseL
 
 ### The Spaced Repetition Algorithm
 
-ReviseLeet implements a **fixed-interval spaced repetition** system based on proven cognitive science principles:
+ReviseLeet implements a **dynamic spaced repetition** system based on proven cognitive science principles. Each review interval is calculated **from the date you completed the previous review**, not from the original solve date:
+
+```
+  Solved Jul 13 → next review: Jul 13 + 1  = Jul 14
+  Solved Jul 14 → next review: Jul 14 + 3  = Jul 17
+  Solved Jul 17 → next review: Jul 17 + 7  = Jul 24
+  Solved Jul 24 → next review: Jul 24 + 15 = Aug 8
+  Solved Aug  8 → next review: Aug  8 + 30 = Sep 7  → 🎓 MASTERED
+```
 
 ```
                     🧠 MEMORY RETENTION vs TIME
@@ -140,25 +148,25 @@ ReviseLeet implements a **fixed-interval spaced repetition** system based on pro
    20% ┤                          ██████████████████████████
        │
     0% ┼──────────────────────────────────────────────────────→ Days
-       0    1    3    7     15         30
+       0    1    4    11    26         56
 
   ─── With ReviseLeet ───
 
   Retention
-  100% ┤██  ▲██  ▲██    ▲██        ▲██ ──────────────────────→ Mastered!
-       │  ██│  ██│  ██   │  ██      │  ██
-   80% ┤    ▼    ▼    ██ │    ██    │    ███
-       │              ██ │      ██  │       ████
-   60% ┤                 ▼        ██▼           ████████████
+  100% ┤██  ▲██   ▲██     ▲██          ▲██ ─────────────────→ Mastered!
+       │  ██│  ██ │  ██    │  ██        │  ██
+   80% ┤    ▼    ▼    ██  │    ██      │    ███
+       │               ██ │      ██    │       ████
+   60% ┤                  ▼        ██  ▼           ████████████
        │
        ┼──────────────────────────────────────────────────────→ Days
-       0    1    3    7     15         30
-            ↑    ↑    ↑      ↑          ↑
-           Review Review Review  Review  Review
-           Step 1 Step 2 Step 3  Step 4  Step 5
+       0    1    4    11    26         56
+            ↑    ↑     ↑     ↑          ↑
+           +1d  +3d   +7d  +15d       +30d
+          Step 1 Step 2 Step 3 Step 4  Step 5
 ```
 
-**Each review boosts your retention back up**, and with progressively longer intervals, the memory gets consolidated into long-term storage.
+**Each review boosts your retention back up**, and with progressively longer intervals relative to each solved date, the memory gets consolidated into long-term storage.
 
 ### Lifecycle of a Tracked Problem
 
@@ -171,7 +179,7 @@ ReviseLeet implements a **fixed-interval spaced repetition** system based on pro
 │   📡  content.js detects "Accepted" (API hook + DOM fallback)    │
 │    │                                                             │
 │    ▼                                                             │
-│   💾  background.js creates schedule [+1d, +3d, +7d, +15d, +30d] │
+│   💾  background.js creates schedule (first review: +1d)          │
 │    │                                                             │
 │    ▼                                                             │
 │   ┌──────────────────────────────────────────────┐               │
@@ -341,13 +349,15 @@ After 5 successful reviews across 30 days, the problem is marked as **Mastered**
 <td>
 
 ```
- Day  0 ─── Solve "Two Sum" ──────── 🆕 Tracked!
- Day  1 ─── Review #1 ───────────── ✅ Step 1/5
- Day  3 ─── Review #2 ───────────── ✅ Step 2/5
- Day  7 ─── Review #3 ───────────── ✅ Step 3/5
- Day 15 ─── Review #4 ───────────── ✅ Step 4/5
- Day 30 ─── Review #5 ───────────── 🎓 MASTERED!
+ Jul 13 ─── Solve "Two Sum" ─────── 🆕 Tracked!
+ Jul 14 ─── Review #1 (+1d) ─────── ✅ Step 1/5
+ Jul 17 ─── Review #2 (+3d) ─────── ✅ Step 2/5
+ Jul 24 ─── Review #3 (+7d) ─────── ✅ Step 3/5
+ Aug  8 ─── Review #4 (+15d) ────── ✅ Step 4/5
+ Sep  7 ─── Review #5 (+30d) ────── 🎓 MASTERED!
 ```
+
+*Each review date is relative to when you completed the previous one.*
 
 </td>
 </tr>
@@ -378,16 +388,19 @@ Each tracked problem is stored with the following structure:
   problemSlug: "two-sum",                          // URL slug identifier
   url: "https://leetcode.com/problems/two-sum/",   // Direct problem link
   schedule: [                                       // 5 review timestamps
-    1720612800000,   // Day 1  — first review
-    1720785600000,   // Day 3
-    1721131200000,   // Day 7
-    1721822400000,   // Day 15
-    1723118400000    // Day 30
+    1720612800000,   // +1 day from solve  — set on creation
+    null,            // +3 days from Step 1 — set when Step 1 is completed
+    null,            // +7 days from Step 2 — set when Step 2 is completed
+    null,            // +15 days from Step 3 — set when Step 3 is completed
+    null             // +30 days from Step 4 — set when Step 4 is completed
   ],
   currentStep: 0,     // 0–5 (5 = graduated / mastered)
   firstSolvedAt: 1720526400000   // When you first solved it
 }
 ```
+
+> [!NOTE]
+> Only the first review date is pre-computed. Each subsequent date is dynamically set when you complete the current review, ensuring intervals are always relative to your actual completion time.
 
 ---
 

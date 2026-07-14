@@ -7,11 +7,15 @@ const GRACE_PERIOD_MS = 12 * 60 * 60 * 1000; // 12 hours before exact due time
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Build the schedule array from a base timestamp.
- * Each entry is the exact future timestamp when the review is due.
+ * Build the initial schedule array from a base timestamp.
+ * Only the first review date is set (base + 1 day).
+ * Subsequent dates are set dynamically when each review is completed,
+ * so that each interval is relative to the actual completion date.
  */
 function buildSchedule(baseTimestamp) {
-  return REVISION_INTERVALS_DAYS.map(days => baseTimestamp + (days * DAY_MS));
+  const schedule = new Array(REVISION_INTERVALS_DAYS.length).fill(null);
+  schedule[0] = baseTimestamp + (REVISION_INTERVALS_DAYS[0] * DAY_MS);
+  return schedule;
 }
 
 //  slug formatting 
@@ -50,6 +54,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Check if the problem is currently due (with 12-hour grace period)
       if (now >= currentDueTime - GRACE_PERIOD_MS) {
         problem.currentStep++;
+
+        // Set the NEXT due date relative to NOW (when this revision was completed)
+        if (problem.currentStep < REVISION_INTERVALS_DAYS.length) {
+          problem.schedule[problem.currentStep] = now + (REVISION_INTERVALS_DAYS[problem.currentStep] * DAY_MS);
+        }
+
         revisions[existingIndex] = problem;
 
         const stepLabel = problem.currentStep >= REVISION_INTERVALS_DAYS.length
